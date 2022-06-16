@@ -82,7 +82,7 @@ productsRouter.delete('/:id', async (req, res) => {
 
 app.use('/api/products', productsRouter);
 
-const c = new FirebaseContainer('cart');
+const c = new FirebaseContainer('cart', p);
 
 cartRouter.post('/', async (req, res) => {
     const id = await c.save();
@@ -126,7 +126,7 @@ cartRouter.post('/:id/products', async (req, res) => {
 cartRouter.delete('/:id/products/:idProd', async (req, res) => {
     const { id, idProd } = req.params;
 
-    const delCart = await c.removeProductById(Number(id), Number(idProd));
+    const delCart = await c.removeProductById(id, idProd);
 
     res.json({ message: delCart || 'Product not found' });
 });

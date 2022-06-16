@@ -1,7 +1,7 @@
 import { mongo } from '../db/MongoDB.js';
 import { Product } from './models/products.js';
 
-export default class ContainerDB {
+export default class MongoDBContainer {
     constructor(){
         this.db = mongo;
     };
@@ -22,7 +22,7 @@ export default class ContainerDB {
         this.db.connection();
 
         try {
-            const data = await Product.findById(id);
+            const data = await Product.findById(id, { __v: 0 });
 
             return data;
         } catch (error) {

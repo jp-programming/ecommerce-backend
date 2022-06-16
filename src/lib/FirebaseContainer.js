@@ -1,9 +1,9 @@
 import { ad } from '../db/Firebase.js';
-
 export default class FirebaseContainer {
-    constructor(collName){
-        this.db = ad;
+    constructor(collName, products){
+        this.db = ad.firestore();
         this.query = this.db.collection(collName);
+        this.products = products;
     };
 
     async save() {
@@ -15,58 +15,42 @@ export default class FirebaseContainer {
     }
 
     async getById(id) {
-        return await this.query.doc(id).get();
+        try {
+            return (await this.query.doc(id).get()).data();
+        }   catch(err) {
+            return -1;
+        }
     }
 
     async addProductById(id, idProd) {
-        // const cart = await this.getAll(this.root);
-        // const index = cart.findIndex(obj => obj.id === id);
+        const cart = await this.getById(id);
+        if(cart === -1) return;
 
-        // if(index === -1) return;
+        const isInCart = cart.products.find(obj => obj._id === idProd);
+        if(isInCart) return 'Product already exists in cart';
 
-        // const isInCart = !cart[index].products 
-        //     ? cart[index].products = []
-        //     : cart[index].products.find(obj => obj.id === idProd);
+        const product = await this.products.getById(idProd);
+        if(product === null) return 'Product not found';
+        
+        const newObject = {
+            ...product._doc,
+            _id: idProd,
+        };
+        
+        await this.query.doc(id).update({ products: ad.firestore.FieldValue.arrayUnion(newObject) });
 
-        // if(!Array.isArray(isInCart) && isInCart) return 'Product already exists in cart';
-
-        // const products = await this.getAll(this.dir+'/products.txt');
-
-        // const product = products.find(obj => obj.id === idProd);
-        // if(product === undefined) return 'Product not found';
-
-        // const newCartProduct = {
-        //     ...cart[index],
-        //     products: [...cart[index].products, product]
-        // };
-
-        // cart.splice(index, 1, newCartProduct);
-
-        // await fsPromises.writeFile(this.root, JSON.stringify(cart, null, 2));
-        // return 'Product added to cart';
+        return 'Product added to cart';
     };
 
     async removeProductById(id, idProd){
-        // const cart = await this.getAll(this.root);
-        // const index = cart.findIndex(obj => obj.id === id);
+        const cart = await this.getById(id);
+        if(cart === -1) return 'Cart not found';
 
-        // if(index === -1) return;
-
-        // const products = cart[index].products;
-        // const indexProd = products.findIndex(obj => obj.id === idProd);
-
-        // if(indexProd === -1) return;
-
-        // products.splice(indexProd, 1);
-
-        // const newCartProduct = {
-        //     ...cart[index],
-        //     products: [...products]
-        // };
-
-        // cart.splice(index, 1, newCartProduct);
-
-        // await fsPromises.writeFile(this.root, JSON.stringify(cart, null, 2));
-        // return 'Product removed from cart';
+        const isInCart = cart.products.find(obj => obj._id === idProd);
+        if(!isInCart) return;
+        
+        await this.query.doc(id).update({ products: ad.firestore.FieldValue.arrayRemove(isInCart) });
+        
+        return 'Product removed from cart';
     }
 }

@@ -7,4 +7,4 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
-export const ad = admin.firestore();
+export const ad = admin;
