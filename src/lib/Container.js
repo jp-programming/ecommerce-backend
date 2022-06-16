@@ -1,6 +1,6 @@
-const fsPromises = require('fs/promises');
+import fsPromises from 'fs/promises';
 
-module.exports = class Container {
+export default class Container {
     constructor(filename){
         this.dir = './data';
         this.root = `${this.dir}/${filename}`;

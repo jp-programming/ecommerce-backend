@@ -1,5 +1,7 @@
-const Container = require('./lib/Container.js');
-const express = require('express');
+import MongoDBContainer from './lib/MongoDBContainer.js';
+import FirebaseContainer from './lib/FirebaseContainer.js';
+import express from 'express';
+
 const app = express();
 
 const productsRouter = express.Router();
@@ -9,15 +11,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('../public'));
 
-const pd = new Container('products.txt');
+const p = new MongoDBContainer();
 
 productsRouter.get('/:id?', async (req, res) => {
     const { id } = req.params; 
-    const products = await pd.getAll();
+    const products = await p.getAll();
 
     if(products.length > 0) {
         const data = id 
-            ? await pd.getById(Number(id))
+            ? await p.getById(id)
             : products; 
 
         res.json(data || { message: 'Product not found' });
@@ -33,7 +35,7 @@ productsRouter.post('/', async (req, res) => {
     delete body.admin;
 
     if(admin) {
-        const id = await pd.save(body);
+        const id = await p.save(body);
         const message = id ? `Product saved with id ${id}` : 'Error saving product';
         
         res.json({ message });
@@ -51,7 +53,7 @@ productsRouter.put('/:id', async (req, res) => {
 
     if(admin) {
 
-        const updProduct = await pd.updateById(Number(id), body);
+        const updProduct = await p.updateById(id, body);
 
         res.json({ message: updProduct !== -1 
             ? 'Product updated' 
@@ -67,7 +69,7 @@ productsRouter.delete('/:id', async (req, res) => {
     const { admin } = req.body;
 
     if(admin) {   
-        const delProduct = await pd.deleteById(Number(id));
+        const delProduct = await p.deleteById(id);
 
         res.json({ message: delProduct 
             ? 'Product deleted' 
@@ -80,7 +82,7 @@ productsRouter.delete('/:id', async (req, res) => {
 
 app.use('/api/products', productsRouter);
 
-const c = new Container('cart.txt');
+const c = new FirebaseContainer('cart');
 
 cartRouter.post('/', async (req, res) => {
     const id = await c.save();
@@ -92,7 +94,7 @@ cartRouter.post('/', async (req, res) => {
 cartRouter.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
-    const delCart = await c.deleteById(Number(id));
+    const delCart = await c.deleteById(id);
 
     res.json({ message: delCart 
         ? 'Cart deleted' 
@@ -104,7 +106,7 @@ cartRouter.delete('/:id', async (req, res) => {
 cartRouter.get('/:id/products', async (req, res) => {
     const { id } = req.params;
 
-    const cart = await c.getById(Number(id));
+    const cart = await c.getById(id);
 
     res.json(cart 
         ? cart.products || { message: 'Cart is empty' }
@@ -116,7 +118,7 @@ cartRouter.post('/:id/products', async (req, res) => {
     const { id } = req.params;
     const { idProd } = req.body;
 
-    const updCart = await c.addProductById(Number(id), Number(idProd));
+    const updCart = await c.addProductById(id, idProd);
 
     res.json({ message: updCart || 'Cart not found' });
 });
